@@ -31,8 +31,8 @@ int abs(int x){
 //Главная вычислительная функция, для данного теста вычисляет попадание.
 int Calc(const int i0, const int j0, const int l0){
     //Объявление начальных констант
-    const int Ci = 10;
-    const int Cj = 10;
+    const int Ci = 20;
+    const int Cj = 0;
     const int A = 10;
     const int B = 5;
     //Объявление начальных переменных
