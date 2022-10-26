@@ -5,7 +5,7 @@
 
 int main(){
     //Тест из варианта
-    printf("First test from guide(Variant 29) i0 = %d, j0 = %d, l0 = %d\n Result = ",-7, -19, 4); 
+    printf("First test from guide(Variant 29) i0 = %d, j0 = %d, l0 = %d\n Result =  ",-7, -19, 4); 
     Calc(-7, -19, 4);//
     //Далее идут 125 тестов для i0, j0, l0 = {1,...,5}
     int k = 1;
