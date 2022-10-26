@@ -47,9 +47,9 @@ int Calc(const int i0, const int j0, const int l0){
     for(int k = 1; k <= 50; k++){
         int copyik = ik, copyjk = jk, copylk = lk;//Создание копий ik, jk, lk
         //Обновляем ik, jk, lk
-        ik = copyik*max(copyjk, copylk)%30 + copyjk*min(copyik, copylk)%20 + k;
-        jk = min(copyjk, max(copyjk,min(copylk, max(copyjk-copylk, copyik-copylk))));
-        lk = sign(k-10)*abs(copyik-copyjk+copylk-k);
+        ik = max(max(copyik*copyjk, copyik*copylk), copyjk*copylk)%30 + k;
+        jk = abs(copyjk-copylk)*sign(copyik) - abs(copyik-copylk)*sign(copyjk);
+        lk = min(copyik, max(copyjk, min(copylk, max(copyik-copylk, copyjk-copylk))));
         //Проверка на попадание
         if(chek(ik, jk, Ci, Cj, A, B)){
             printf("Yes. k = %d, i = %d, j = %d, l = %d\n", k, ik, jk, lk);
