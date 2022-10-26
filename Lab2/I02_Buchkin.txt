@@ -1,0 +1,230 @@
+raison@raison-VirtualBox:~$ pwd
+/home/raison
+raison@raison-VirtualBox:~$ ls -l
+total 48
+drwxr-xr-x 2 root   root   4096 сен 23 23:42 course
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Desktop
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Documents
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Downloads
+drwxr-xr-x 2 root   root   4096 сен 23 23:43 lab
+-rw-rw-r-- 1 raison raison  396 сен 23 23:48 log2.txt
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Music
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Pictures
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Public
+drwx------ 4 raison raison 4096 сен 23 23:51 snap
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Templates
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Videos
+raison@raison-VirtualBox:~$ ls -l | head -3
+total 48
+drwxr-xr-x 2 root   root   4096 сен 23 23:42 course
+drwxr-xr-x 2 raison raison 4096 сен 20 17:14 Desktop
+raison@raison-VirtualBox:~$ cat > f1.txt
+my first labwork, he-he    
+q
+^Z
+[1]+  Stopped                 cat > f1.txt
+raison@raison-VirtualBox:~$ cat f1.txt
+my first labwork, he-he
+q
+raison@raison-VirtualBox:~$ cp f1.txt f2.txt
+raison@raison-VirtualBox:~$ cat f2.txt
+my first labwork, he-he
+q
+raison@raison-VirtualBox:~$ cat f1.txt f2.txt > f3.txt
+raison@raison-VirtualBox:~$ cat f3.txt
+my first labwork, he-he
+q
+my first labwork, he-he
+q
+raison@raison-VirtualBox:~$ rm f2.txt
+raison@raison-VirtualBox:~$ rm f3.txt
+raison@raison-VirtualBox:~$ mkdir lab
+mkdir: cannot create directory ‘lab’: File exists
+raison@raison-VirtualBox:~$ mkdir Lav
+raison@raison-VirtualBox:~$ mkdir Lab
+raison@raison-VirtualBox:~$ mkdir Course
+raison@raison-VirtualBox:~$ cp f1.txt Lab
+raison@raison-VirtualBox:~$ rm f1.txt
+raison@raison-VirtualBox:~$ cd lab
+raison@raison-VirtualBox:~/lab$ cat > names.txt
+bash: names.txt: Permission denied
+raison@raison-VirtualBox:~/lab$ chown raison lab
+chown: cannot access 'lab': No such file or directory
+raison@raison-VirtualBox:~/lab$ cd ..
+raison@raison-VirtualBox:~$ chown raison lab
+chown: changing ownership of 'lab': Operation not permitted
+raison@raison-VirtualBox:~$ ls -1
+Course
+Desktop
+Documents
+Downloads
+lab
+Lab
+Lav
+log2.txt
+Music
+Pictures
+Public
+snap
+Templates
+Videos
+raison@raison-VirtualBox:~$ ls -1 lab/names.txt
+ls: cannot access 'lab/names.txt': No such file or directory
+raison@raison-VirtualBox:~$ cd lab
+raison@raison-VirtualBox:~/lab$ ls -l -1
+total 4
+-rw-r--r-- 1 root root 22 сен 23 23:43 f1.txt
+raison@raison-VirtualBox:~/lab$ touch names.txt
+touch: cannot touch 'names.txt': Permission denied
+raison@raison-VirtualBox:~/lab$ sudo touch names.txt
+[sudo] password for raison: 
+Sorry, try again.
+[sudo] password for raison: 
+raison@raison-VirtualBox:~/lab$ ls -1 names.txt
+names.txt
+raison@raison-VirtualBox:~/lab$ ls -1 -l
+total 4
+-rw-r--r-- 1 root root 22 сен 23 23:43 f1.txt
+-rw-r--r-- 1 root root  0 сен 24 12:18 names.txt
+raison@raison-VirtualBox:~/lab$ cat > names.txt
+bash: names.txt: Permission denied
+raison@raison-VirtualBox:~/lab$ sudo cat > names.txt
+bash: names.txt: Permission denied
+raison@raison-VirtualBox:~/lab$ cat names.txt
+raison@raison-VirtualBox:~/lab$ cat f1.txt
+First labwork, hehehe
+raison@raison-VirtualBox:~/lab$ f1.txt > names.txt
+bash: names.txt: Permission denied
+raison@raison-VirtualBox:~/lab$ cat | sudo tee -a./names.txt
+tee: invalid option -- '.'
+Try 'tee --help' for more information.
+Tima
+raison@raison-VirtualBox:~/lab$ cat | sudo tee -a names.txt
+Tima
+Tima
+Petya
+Petya
+Vanya
+Vanya
+Vasiliy
+Vasiliy
+^Z
+[1]+  Stopped                 cat | sudo tee -a names.txt
+raison@raison-VirtualBox:~/lab$ cat names.txt
+Tima
+Petya
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ cat names.txt | sort
+Petya
+Tima
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ grep 'Tima' names.txt
+Tima
+raison@raison-VirtualBox:~/lab$ locate names.txt
+Command 'locate' not found, but can be installed with:
+sudo apt install plocate
+raison@raison-VirtualBox:~/lab$ find names.txt
+names.txt
+raison@raison-VirtualBox:~/lab$ cd ..
+raison@raison-VirtualBox:~$ find names.txt
+find: ‘names.txt’: No such file or directory
+raison@raison-VirtualBox:~$ lab
+Command 'lab' not found, did you mean:
+  command 'laby' from deb laby (0.7.0-1build2)
+  command 'ab' from deb apache2-utils (2.4.52-1ubuntu4.1)
+  command 'fab' from deb fabric (2.6.0-1)
+  command 'ldb' from deb rocksdb-tools (6.11.4-3)
+  command 'dab' from deb bsdgames (2.17-29)
+  command 'lcab' from deb lcab (1.0b12-7)
+  command 'lb' from deb live-build (3.0~a57-1ubuntu41)
+  command 'lb' from deb open-infrastructure-system-build (20190301-lts1-2)
+Try: sudo apt install <deb name>
+raison@raison-VirtualBox:~$ cd lab
+raison@raison-VirtualBox:~/lab$ cat names.txt| head 1
+head: cannot open '1' for reading: No such file or directory
+raison@raison-VirtualBox:~/lab$ cat names.txt| head -1
+Tima
+raison@raison-VirtualBox:~/lab$ cat names.txt| sort | head -1
+Petya
+raison@raison-VirtualBox:~/lab$ cat names.txt| head -1 | sort
+Tima
+raison@raison-VirtualBox:~/lab$ cat names.txt| head -2
+Tima
+Petya
+raison@raison-VirtualBox:~/lab$ cat names.txt| head -2 | sort
+Petya
+Tima
+raison@raison-VirtualBox:~/lab$ cat names.txt| tail -3
+Petya
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ cat names.txt| sort | tail -3
+Tima
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ cd ..
+raison@raison-VirtualBox:~$ cat > scr.bash
+echo 'Bash script works correct'
+^C
+raison@raison-VirtualBox:~$ bash scr.bash
+Bash script works correct
+raison@raison-VirtualBox:~$ cp scr.bash scr.sh
+raison@raison-VirtualBox:~$ find scr.sh
+scr.sh
+raison@raison-VirtualBox:~$ bash scr.sh
+Bash script works correct
+raison@raison-VirtualBox:~$ cp names.txt | sort names2.txt
+sort: cannot read: names2.txt: No such file or directory
+cp: missing destination file operand after 'names.txt'
+Try 'cp --help' for more information.
+raison@raison-VirtualBox:~$ cat names.txt | sort
+cat: names.txt: No such file or directory
+raison@raison-VirtualBox:~$ cd lab
+raison@raison-VirtualBox:~/lab$ cat names.txt | sort
+Petya
+Tima
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ cat names.txt | sort > names2.txt
+bash: names2.txt: Permission denied
+raison@raison-VirtualBox:~/lab$ cat names.txt | sort | sudo tee  names2.txt
+Petya
+Tima
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ cat names.txt 
+Tima
+Petya
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ cat names2.txt 
+Petya
+Tima
+Vanya
+Vasiliy
+raison@raison-VirtualBox:~/lab$ diff names.txt names2.txt
+1d0
+< Tima
+2a2
+> Tima
+raison@raison-VirtualBox:~/lab$ cd ..
+raison@raison-VirtualBox:~$ rmdir lab
+rmdir: failed to remove 'lab': Directory not empty
+raison@raison-VirtualBox:~$ cd lab
+raison@raison-VirtualBox:~/lab$ rm *
+rm: remove write-protected regular file 'f1.txt'? y
+rm: cannot remove 'f1.txt': Permission denied
+rm: remove write-protected regular file 'names2.txt'? y
+rm: cannot remove 'names2.txt': Permission denied
+rm: remove write-protected regular file 'names.txt'? y
+rm: cannot remove 'names.txt': Permission denied
+raison@raison-VirtualBox:~/lab$ sudo rm *
+raison@raison-VirtualBox:~/lab$ ls -l
+total 0
+raison@raison-VirtualBox:~/lab$ cd ..
+raison@raison-VirtualBox:~$ rmdir lab
+raison@raison-VirtualBox:~$ find lab
+find: ‘lab’: No such file or directory
+
