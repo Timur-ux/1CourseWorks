@@ -36,7 +36,7 @@ int main()
     double k;
     double a = -1, b = 1;
     int n = 30;
-    printf("Input k (1e12 is good) ");
+    printf("Input k (1e14 is good) ");
     scanf("%lf", &k);
     printf("\n");
     while ((1+prev_eps) != 1)
@@ -47,12 +47,12 @@ int main()
 
     eps *= k;
     printf("eps*k is %f\n", eps);
-    printf("     Table of values function f(x) = x/(9+x^2)\n");
+    printf("                  Table of values function f(x) = x/(9+x^2)\n");
     printf("| x            | Taylor's row sum for f(x)| f(x)        | iteration's quantity|\n");
     double dx = (b-a)/n;
     for(double x = a; x <= b; x += dx)
     {
-        int n_iter = 7;
+        int n_iter = 50;
         double taylorX = taylor(x, a, b, n_iter, eps);
         double fX = f(x);
         if(x<0)
