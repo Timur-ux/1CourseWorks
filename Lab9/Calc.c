@@ -8,12 +8,8 @@ int min(int a, int b){
     return (a>b) ? b : a;
 }
 int chek(int i, int j, int Ci, int Cj, int A, int B){
-    if (abs(Cj - j)>A){
-        return 0;
-    }
-    //Xo2mCi - максимальный разлёт значений х от Ci, если у считать параметром.(i ~ x, j ~ y в дальнейшем).
-    int Xo2mCi = A*A*(1-(j-Cj)*(j-Cj)/B/B);
-    if(Xo2mCi >= (i-Ci)*(i-Ci)){
+    if(((i-Ci)*(i-Ci)/A/A + (j-Cj)*(j-Cj)/B/B) <= 1)
+    {
         return 1;
     }
     return 0;
@@ -47,7 +43,7 @@ int Calc(const int i0, const int j0, const int l0){
     for(int k = 1; k <= 50; k++){
         int copyik = ik, copyjk = jk, copylk = lk;//Создание копий ik, jk, lk
         //Обновляем ik, jk, lk
-        ik = max(max(copyik*copyjk, copyik*copylk), copyjk*copylk)%30 + k;
+        ik = abs(max(max(copyik*copyjk, copyik*copylk), copyjk*copylk))%30 + k;
         jk = abs(copyjk-copylk)*sign(copyik) - abs(copyik-copylk)*sign(copyjk);
         lk = min(copyik, max(copyjk, min(copylk, max(copyik-copylk, copyjk-copylk))));
         //Проверка на попадание
