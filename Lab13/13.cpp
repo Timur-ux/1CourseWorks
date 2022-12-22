@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <set>
-#include <string>
 
 using namespace std;
 
@@ -20,36 +19,48 @@ int count(string s, char el)
 
 int main()
 {
-  vector<string> result;
   set<char> good{'a', 'o', 'i', 'e', 'u', 'y'};
-  string val;
-  while(cin >> val)
+  char val;
+  set<char> Sval;
+  bool flag = true;
+  vector<bool> result;
+  for(char val; (val = getchar()); )
   {
-    bool flag = true;
-    set<char> Sval;
-    for(char el : val)
+    val = tolower(val);
+    if(val == ' ' || val == '\n' || val == EOF)
     {
-      Sval.insert(el);
-    }
-    for(set<char>::iterator it = Sval.begin(); it != Sval.end(); it++)
-    {
-      if(good.find(*it) != good.end() && count(val, *it) > 1)
+      if(flag)
       {
-        flag = false;
+        result.push_back(true);
+      }
+      flag = true;
+      Sval.erase(Sval.begin(), Sval.end());
+      if(val == EOF)
+      {
         break;
       }
     }
-    if(flag)
+    if(Sval.find(val) != Sval.end() && good.find(val) != good.end())
     {
-      cout << "YES - " << val << endl;
-      result.push_back(val);
+      flag = false;
+      result.push_back(false);
     }
     else
     {
-      cout << "NO - " << val << endl;
+      Sval.insert(val);
     }
   }
-  cout << endl;
+  for(int i = 0; i < result.size()-1; i++)
+  {
+    if(result[i])
+    {
+      cout << "YES" << ' ';
+    }
+    else
+    {
+      cout << "NO" << ' ';
+    }
+  }
 
   return 0;
 }
