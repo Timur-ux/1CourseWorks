@@ -115,13 +115,22 @@ void delete_node(Node** where, int what)
         {
             Node * most_left_node = find_most_left(cur_node);
             (*where) = most_left_node;
-            most_left_node->parent = NULL;
             if(cur_node->right->left != NULL)
             {
+                if(most_left_node->right != NULL)
+                {
+                    
+                    most_left_node->parent->left = most_left_node->right;
+                    most_left_node->right->parent = most_left_node->parent;
+                }
+                else
+                {
+                    cur_node->right->left = NULL;
+                }
                 cur_node->right->parent = most_left_node;
                 most_left_node->right = cur_node->right;
-                cur_node->right->left = NULL;
             }
+            most_left_node->parent = NULL;
             cur_node->left->parent = most_left_node;
             most_left_node->left = cur_node->left;
         }
@@ -163,12 +172,20 @@ void delete_node(Node** where, int what)
     else
     {
         Node * most_left_node = find_most_left(cur_node);
-
+        
         if(cur_node->right->left != NULL)
         {
+            if(most_left_node->right != NULL)
+            {
+                most_left_node->parent->left = most_left_node->right;
+                most_left_node->right->parent = most_left_node->parent;
+            }
+            else
+            {
+                most_left_node->parent->left = NULL;
+            }
             most_left_node->right = cur_node->right;
             cur_node->right->parent = most_left_node;
-            most_left_node->parent->left = NULL;
         }
         cur_node->left->parent = most_left_node;
         most_left_node->left = cur_node->left;
