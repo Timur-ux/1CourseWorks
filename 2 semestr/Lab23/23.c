@@ -79,12 +79,11 @@ Node* search(Node * node, int v)
 
 Node * find_most_left(Node * node)//use this method only if node has right son
 {
-    Node * cur_node = node->right;
-    while(cur_node->left != NULL)
+    while(node->left != NULL)
     {
-        cur_node = cur_node->left;
+        node = node->left;
     }
-    return cur_node;
+    return node;
 }
 
 void delete_node(Node** where, int what)
@@ -92,114 +91,103 @@ void delete_node(Node** where, int what)
     Node * cur_node = search((*where), what);
     if(cur_node == NULL)
     {
-        printf("E: %d doesn't in tree\n", what);
+        printf("\nE: %d doesn't in tree\n", what);
         return;
     }
-    if(cur_node->parent == NULL)
+    Node * parent = cur_node->parent;
+    Node * left = cur_node->left;
+    Node * right = cur_node->right;
+    if(left == NULL && right == NULL)
     {
-        if(cur_node->left == NULL && cur_node->right == NULL)
+        if(parent != NULL)
         {
-            (*where) = NULL;
-        }
-        else if(cur_node->left == NULL)
-        {
-            (*where) = cur_node->right;
-            (*where)->parent = NULL;
-        }
-        else if(cur_node->right == NULL)
-        {
-            (*where) = cur_node->left;
-            (*where)->parent = NULL;
-        }
-        else
-        {
-            Node * most_left_node = find_most_left(cur_node);
-            (*where) = most_left_node;
-            if(cur_node->right->left != NULL)
+            if(parent->val <= cur_node->val)
             {
-                if(most_left_node->right != NULL)
-                {
-                    
-                    most_left_node->parent->left = most_left_node->right;
-                    most_left_node->right->parent = most_left_node->parent;
-                }
-                else
-                {
-                    cur_node->right->left = NULL;
-                }
-                cur_node->right->parent = most_left_node;
-                most_left_node->right = cur_node->right;
-            }
-            most_left_node->parent = NULL;
-            cur_node->left->parent = most_left_node;
-            most_left_node->left = cur_node->left;
-        }
-        return;
-    }
-    if(cur_node->left == NULL && cur_node->right == NULL)
-    {
-        if(cur_node->val >= cur_node->parent->val)
-        {
-            cur_node->parent->right = NULL;
-        }
-        else
-        {
-            cur_node->parent->left = NULL;
-        }
-    }
-    else if(cur_node->left == NULL)
-    {
-        if(cur_node->val >= cur_node->parent->val)
-            {
-                cur_node->parent->right = cur_node->right;
-            }
-        else
-            {
-               cur_node->parent->left = cur_node->right;
-            }
-    }
-    else if(cur_node->right == NULL)
-    {
-        if(cur_node->val >= cur_node->parent->val)
-        {
-            cur_node->parent->right = cur_node->left;
-        }
-        else
-        {
-            cur_node->parent->left = cur_node->left;
-        }
-    }
-    else
-    {
-        Node * most_left_node = find_most_left(cur_node);
-        
-        if(cur_node->right->left != NULL)
-        {
-            if(most_left_node->right != NULL)
-            {
-                most_left_node->parent->left = most_left_node->right;
-                most_left_node->right->parent = most_left_node->parent;
+                parent->right = NULL;
             }
             else
             {
-                most_left_node->parent->left = NULL;
+                parent->left = NULL;
             }
-            most_left_node->right = cur_node->right;
-            cur_node->right->parent = most_left_node;
-        }
-        cur_node->left->parent = most_left_node;
-        most_left_node->left = cur_node->left;
-
-        most_left_node->parent = cur_node->parent;
-
-        if(cur_node->val >= cur_node->parent->val)
-        {
-            cur_node->parent->right = most_left_node;
         }
         else
         {
-            cur_node->parent->left = most_left_node;
+            (*where) = NULL;
         }
+    }
+    else if(right == NULL)
+    {
+        if(parent != NULL)
+        {
+            if(parent->val <= cur_node->val)
+            {
+                parent->right = left;
+            }
+            else
+            {
+                parent->left = left;
+            }
+        }
+        else
+        {
+            (*where) = left;
+        }
+        left->parent = parent;
+    }
+    else if(left == NULL)
+    {
+        if(parent != NULL)
+        {
+            if(parent->val <= cur_node->val)
+            {
+                parent->right = right;
+            }
+            else
+            {
+                parent->left = right;
+            }
+        }
+        else
+        {
+            (*where) = right;
+        }
+        right->parent = parent;
+    }
+    else
+    {
+        Node * mln = find_most_left(cur_node->right);// mln - most left node
+        
+        if(cur_node->right->left != NULL)
+        {
+            mln->parent->left = mln->right;
+            if(mln->right != NULL)
+            {
+                mln->right->parent = mln->parent;// set right son and mln conection if he exist
+            }
+            mln->right = cur_node->right;
+            cur_node->right->parent = mln;// set right son
+        }
+
+        mln->left = cur_node->left;
+        cur_node->left->parent = mln; // set left son and mln conection
+
+        mln->parent = cur_node->parent;
+        if(cur_node->parent != NULL)
+        {
+            if(cur_node->parent->val <= cur_node->val)
+            {
+                cur_node->parent->right = mln;
+            }
+            else
+            {
+                cur_node->parent->left = mln;
+            }
+        }// set mln's parent conection
+        else
+        {
+            (*where) = mln;
+        }
+        
     }
     free(cur_node);
 }
