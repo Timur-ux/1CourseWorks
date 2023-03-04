@@ -86,6 +86,18 @@ Node * find_most_left(Node * node)//use this method only if node has right son
     return node;
 }
 
+void setParSonConnection(Node * parent, Node* son, Node* what)
+{
+    if(son->val >= parent->val)
+    {
+        parent->right = what;
+    }
+    else
+    {
+        parent->left = what;
+    }
+}
+
 void delete_node(Node** where, int what)
 {
     Node * cur_node = search((*where), what);
@@ -101,14 +113,7 @@ void delete_node(Node** where, int what)
     {
         if(parent != NULL)
         {
-            if(parent->val <= cur_node->val)
-            {
-                parent->right = NULL;
-            }
-            else
-            {
-                parent->left = NULL;
-            }
+            setParSonConnection(parent, cur_node, NULL);
         }
         else
         {
@@ -119,14 +124,7 @@ void delete_node(Node** where, int what)
     {
         if(parent != NULL)
         {
-            if(parent->val <= cur_node->val)
-            {
-                parent->right = left;
-            }
-            else
-            {
-                parent->left = left;
-            }
+            setParSonConnection(parent, cur_node, left);
         }
         else
         {
@@ -138,14 +136,7 @@ void delete_node(Node** where, int what)
     {
         if(parent != NULL)
         {
-            if(parent->val <= cur_node->val)
-            {
-                parent->right = right;
-            }
-            else
-            {
-                parent->left = right;
-            }
+            setParSonConnection(parent, cur_node, right);
         }
         else
         {
@@ -162,32 +153,24 @@ void delete_node(Node** where, int what)
             mln->parent->left = mln->right;
             if(mln->right != NULL)
             {
-                mln->right->parent = mln->parent;// set right son and mln conection if he exist
+                mln->right->parent = mln->parent;// set right son and mln connection if he exist
             }
             mln->right = cur_node->right;
             cur_node->right->parent = mln;// set right son
         }
 
         mln->left = cur_node->left;
-        cur_node->left->parent = mln; // set left son and mln conection
+        cur_node->left->parent = mln; // set left son and mln connection
 
         mln->parent = cur_node->parent;
         if(cur_node->parent != NULL)
         {
-            if(cur_node->parent->val <= cur_node->val)
-            {
-                cur_node->parent->right = mln;
-            }
-            else
-            {
-                cur_node->parent->left = mln;
-            }
-        }// set mln's parent conection
+            setParSonConnection(parent, cur_node, mln);
+        }// set mln's parent connection
         else
         {
             (*where) = mln;
         }
-        
     }
     free(cur_node);
 }
