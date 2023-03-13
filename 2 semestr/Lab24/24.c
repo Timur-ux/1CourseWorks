@@ -91,49 +91,93 @@ void stringToStack(Stack **stack, const char *s)
         }
     }
 }
+
+Stack * copyStack(Stack *stack)
+{
+    if(stack == NULL)
+    {
+        return NULL;
+    }
+    Stack * result = malloc(sizeof(Stack));
+    result->val = malloc(strlen(stack->val)+1);
+    memcpy(result->val, stack->val, strlen(stack->val)+1);
+    result->prev = copyStack(stack->prev);
+    return result;
+}
 Stack * findLower(Stack *stack)
 {
-    Stack * cur_stack = stack;
-    while(cur_stack->prev != "(")
+    while(*stack->prev->val != '(')
     {
-        cur_stack = cur_stack->prev;
+        stack = stack->prev;
     }
-    return cur_stack->prev;
+    return stack->prev;
 }
-Stack * convToPrefForm(Stack *cur_stack)
+Stack * convToPrefForm(Stack *stack)
 {
     Stack * result = NULL;
+    const char * val;
+    Stack * cur_stack = copyStack(stack);
     while(1)
     {
-        val = Pop(&cur_stack);
-        if(val == "+" || val == "-" || val == "*" || val == "/")
-        {
-            Push(&result, val);
-        }
-        else if(val == ")")
-        {
-            Stack * inner_stack = convToPrefForm(&(cur_stack->prev));
-
-        }
-        else if (val == "(")
+        if(cur_stack == NULL)
         {
             return result;
         }
+        val = Pop(&cur_stack);
+        if(*val == '+' || *val == '-' || *val == '*' || *val == '/')
+        {
+            Push(&result, val);
+        }
+        else if(*val == ')')
+        {
+            Stack * temp_stack = cur_stack;
+            cur_stack = (findLower(cur_stack))->prev;
+            Stack * inner_stack = convToPrefForm(temp_stack);
+            if(result == NULL)
+            {
+                sumStacks(inner_stack, result);
+                result = inner_stack;
+            }
+            else
+            {
+                const char * op = Pop(&result);
+                sumStacks(inner_stack, result);
+                result = inner_stack;
+                Push(&result, op);
+            }
+        }
+        else if (*val == '(')
+        {
+            return result;
+            
+        }
         else
         {
-            const char * op = Pop(&result);
-            Push(&result, val);
-            Push(&result, op);
+            if(result == NULL)
+            {
+                Push(&result, val);
+            }
+            else
+            {
+                const char * op = Pop(&result);
+                Push(&result, val);
+                Push(&result, op);
+            }
+            
         }
+        printStack(result);
+        printf("----------------\n");
     }
-    
 }
 
 int main()
 {
-    const char *s = "( 2 + 3 ) * k + 174";
+    const char *s = "( ( ( ( 2 + 3 - 333 ) * k ) + 174 ) / 999 ) + 15";
     Stack * stack = NULL;
     stringToStack(&stack, s);
+    printStack(stack);
+    printf("^^^^^^^^^^^^\n");
+    stack = convToPrefForm(stack);
+    printStack(stack);
     return 0;
 }
-//Какая-то лажа в slice когда она вызывается из функции. При вызове из main работает нормально.

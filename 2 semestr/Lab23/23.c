@@ -3,6 +3,7 @@
 typedef struct tree
 {
     int val;
+    int size;
     struct tree* left;
     struct tree* right;
     struct tree* parent;
@@ -15,9 +16,24 @@ Node* create_node(int v)
     res_node->parent = NULL;
     res_node->left = NULL;
     res_node->right = NULL;
+    res_node->size = 1;
     return res_node;
 }
-
+int SizeOf(Node * node)
+{
+    if(node != NULL)
+    {
+        return node->size;
+    }
+    return 0;
+}
+void Recalc(Node * node)
+{
+    if(node != NULL)
+    {
+        node->size = SizeOf(node->left) + SizeOf(node->right) + 1;
+    }
+}
 void add_node(Node* node, int v)
 {
     if(v < node->val)
@@ -29,31 +45,38 @@ void add_node(Node* node, int v)
             new_node->right = NULL;
             new_node->parent = node;
             new_node->val = v;
+            new_node->size = 1;
             node->left = new_node;
+            Recalc(node);
             return;
         }
         else
         {
             add_node(node->left, v);
+            Recalc(node);
         }
     }
     else
     {
         if(node->right == NULL)
         {
-            Node * new_node = (Node *)malloc(sizeof(Node));
+            Node * new_node = malloc(sizeof(Node));
             new_node->left = NULL;
             new_node->right = NULL;
             new_node->parent = node;
             new_node->val = v;
+            new_node->size = 1;
             node->right = new_node;
+            Recalc(node);
             return;
         }
         else
         {
             add_node(node->right, v);
+            Recalc(node);
         }
     }
+    
 }
 
 Node* search(Node * node, int v)
@@ -97,6 +120,14 @@ void setParSonConnection(Node * parent, Node* son, Node* what)
         parent->left = what;
     }
 }
+void RepairSizeUp(Node * node)
+{
+    Recalc(node);
+    if(node->parent != NULL)
+    {
+        RepairSizeUp(node->parent);
+    }
+}
 
 void delete_node(Node** where, int what)
 {
@@ -114,6 +145,7 @@ void delete_node(Node** where, int what)
         if(parent != NULL)
         {
             setParSonConnection(parent, cur_node, NULL);
+            Recalc(parent);
         }
         else
         {
@@ -125,10 +157,12 @@ void delete_node(Node** where, int what)
         if(parent != NULL)
         {
             setParSonConnection(parent, cur_node, left);
+            Recalc(parent);
         }
         else
         {
             (*where) = left;
+            Recalc((*where));
         }
         left->parent = parent;
     }
@@ -137,17 +171,19 @@ void delete_node(Node** where, int what)
         if(parent != NULL)
         {
             setParSonConnection(parent, cur_node, right);
+            Recalc(parent);
         }
         else
         {
             (*where) = right;
+            Recalc((*where));
         }
         right->parent = parent;
     }
     else
     {
         Node * mln = find_most_left(cur_node->right);// mln - most left node
-        
+        Node * mlp_p = mln->parent;
         if(cur_node->right->left != NULL)
         {
             mln->parent->left = mln->right;
@@ -171,6 +207,14 @@ void delete_node(Node** where, int what)
         {
             (*where) = mln;
         }
+        if(mlp_p->left != NULL)
+        {
+            RepairSizeUp(mlp_p->left);
+        }
+        else
+        {
+            RepairSizeUp(mlp_p);
+        }
     }
     free(cur_node);
 }
@@ -185,6 +229,7 @@ void show_tree(Node* node, int depth)
     {
         printf("\t");
     }
+
     printf("%d\n", node->val);
     if(node->left != NULL)
     {
@@ -192,13 +237,39 @@ void show_tree(Node* node, int depth)
     }
 }
 
+int isAVL(Node * node)
+{
+    if(abs(SizeOf(node->left) - SizeOf(node->right))>1)
+    {
+        return 1;
+    }
+    int result = 0;
+    if(node->left != NULL)
+    {
+        result += isAVL(node->left);
+    }
+    if(node->right != NULL)
+    {
+        result += isAVL(node->right);
+    }
+    return result;
+}
+
+int abs(int a)
+{
+    if(a >= 0)
+    {
+        return a;
+    }
+    return (-1)*a;
+}
 int main()
 {
     Node * tree = NULL;
     int n;
     while(1)
     {
-        printf("Choose option:\n1. Create tree\n2. Add node to tree\n3. Delete node from tree\n4. Show tree\n5. Find element in tree\n6. Exit\nYour option: ");
+        printf("Choose option:\n1. Create tree\n2. Add node to tree\n3. Delete node from tree\n4. Show tree\n5. Find element in tree\n6. Chek AVL\n7. Exit\nYour option: ");
         scanf("%d", &n);
         printf("\n");
         if(n == 1)
@@ -269,6 +340,17 @@ int main()
             }
         }
         else if(n == 6)
+        {
+            if(tree == NULL || isAVL(tree) == 0)
+            {
+                printf("This tree is AVL-tree now\n");
+            }
+            else
+            {
+                printf("This tree isn't AVL-tree now\n");
+            }
+        }
+        else if(n == 7)
         {
             return 0;
         }
