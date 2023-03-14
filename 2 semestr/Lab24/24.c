@@ -10,6 +10,17 @@ typedef struct tree
     struct tree* parent;
 } Node;
 
+Node * createNode(const char * val)
+{
+    Node * result = malloc(sizeof(Node));
+    result->parent = NULL;
+    result->left = NULL;
+    result->right = NULL;
+    result->val = malloc((strlen(val)+1)*sizeof(char));
+    memcpy(result->val, val, strlen(val)+1);
+    return result;
+}
+
 typedef struct stack
 {
     char * val;
@@ -112,6 +123,17 @@ Stack * findLower(Stack *stack)
     }
     return stack->prev;
 }
+int in(char el, const char * s)
+{
+    for(int i = 0; i < strlen(s); i++)
+    {
+        if(*(s+i) == el)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
 Stack * convToPrefForm(Stack *stack)
 {
     Stack * result = NULL;
@@ -124,7 +146,7 @@ Stack * convToPrefForm(Stack *stack)
             return result;
         }
         val = Pop(&cur_stack);
-        if(*val == '+' || *val == '-' || *val == '*' || *val == '/')
+        if(in(*val, "+-*/"))
         {
             Push(&result, val);
         }
@@ -163,20 +185,53 @@ Stack * convToPrefForm(Stack *stack)
                 Push(&result, val);
                 Push(&result, op);
             }
-            
         }
-        printStack(result);
-        printf("----------------\n");
+    }
+}
+
+Node * PrefStackToTree(Stack * stack)
+{
+    const char *val = Pop(&stack);
+    Node * result = create_stack(val);
+    Node * cur_node = result;
+    while(stack != NULL)
+    {
+        val = Pop(&stack);
+        if(in(*val, "+-*/"))
+        {
+                if(cur_node->left == NULL)
+                {
+                    cur_node->left = malloc(sizeof(Node));
+                    cur_node->left->left = NULL;
+                    cur_node->left->right = NULL;
+                    cur_node->left->parent = cur_node;
+                    cur_node = cur_node->left;
+                    cur_node->val = malloc(sizeof(char)*(strlen(val)+1));
+                    memcpy(cur_node->val, val, strlen(val)+1);
+                }
+                else
+                {
+                    cur_node->right = malloc(sizeof(Node));
+                    cur_node->right->left = NULL;
+                    cur_node->right->right = NULL;
+                    cur_node->right->parent = cur_node;
+                    cur_node = cur_node->right;
+                    cur_node->val = malloc(sizeof(char)*(strlen(val)+1));
+                    memcpy(cur_node->val, val, strlen(val)+1);
+                }
+        }
+        else
+        {
+            if()
+        }
     }
 }
 
 int main()
 {
-    const char *s = "( ( ( ( 2 + 3 - 333 ) * k ) + 174 ) / 999 ) + 15";
+    const char *s = "( 2 + 3 - 333 ) * k";
     Stack * stack = NULL;
     stringToStack(&stack, s);
-    printStack(stack);
-    printf("^^^^^^^^^^^^\n");
     stack = convToPrefForm(stack);
     printStack(stack);
     return 0;
