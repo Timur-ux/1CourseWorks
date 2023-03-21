@@ -140,8 +140,17 @@ Stack * stringToStack()
             else
             {
                 Item op = Pop(&result);
-                result = sumStacks(inner_stack, result);
-                result = Push(result, op);
+                if(result->item.val.symbol == '+' || result->item.val.symbol == '-')
+                {
+                    Item op2 = Pop(&result);
+                    result = sumStacks(inner_stack, result);
+                    result = Push(Push(result, op), op2);
+                }
+                else
+                {
+                    result = sumStacks(inner_stack, result);
+                    result = Push(result, op);
+                }
             }
         }
         else if(isOperator(c))
@@ -187,7 +196,15 @@ Stack * stringToStack()
                 item.T = number;
                 item.val.num = buff;
                 Item op = Pop(&result);
-                result = Push(Push(result, item), op);
+                if((op.val.symbol == '*' || op.val.symbol == '/') && result->item.T == operator)
+                {  
+                    Item op2 = Pop(&result);
+                    result = Push(Push(Push(result, item), op), op2);
+                }
+                else
+                {
+                    result = Push(Push(result, item), op);
+                }
             }
             else
             {
@@ -203,7 +220,16 @@ Stack * stringToStack()
             else if(result->item.T == operator)
             {
                 Item op = Pop(&result);
-                result = Push(Push(result, (Item){c, letter}), op);
+                if((op.val.symbol == '*' || op.val.symbol == '/') && result->item.T == operator)
+                {
+                    Item op2 = Pop(&result);
+                    result = Push(Push(Push(result, (Item){c, letter}), op), op2);
+                }
+                else
+                {
+                    result = Push(Push(result, (Item){c, letter}), op);
+                }
+                
             }
             else
             {
@@ -422,91 +448,88 @@ void doSumTree(Node * node)
         insertNum(node, sumTree);
     }
 }
-void repairTree(Node ** node)
+Node * repairTree(Node * node)
 {
-    if((*node)->left != NULL && ((*node)->left->item.T == operator))
+    if(node->left != NULL && node->left->item.T == operator)
     {
-        repairTree(&((*node)->left));
+        node->left = repairTree(node->left);
     }
-    if((*node)->right == NULL && (*node)->left == NULL)
+    if(node->item.T != operator)
     {
-        //printf("1#%c#1\n", (*node)->item.val.symbol);
-        if((*node)->item.T == operator)
+        return node;
+    }
+    Node * parent = node->parent;
+    if(node->left == NULL && node->right == NULL)
+    {
+        if(parent == NULL)
         {
-            if((*node)->parent == NULL)
+            return NULL;
+        }
+        if(parent->left == node)
+        {
+            parent->left = NULL;
+            return NULL;
+        }
+        else
+        {
+            parent->right = NULL;
+            return NULL;
+        }
+    }
+    else if(node->left == NULL)
+    {
+        if(node->item.val.symbol == '+')
+        {
+            if(parent == NULL)
             {
-                (*node) = NULL;
-                return;
+                return node->right;
+            }
+            else if(parent->left == node)
+            {
+                parent->left = node->right;
+                node->right->parent = parent;
             }
             else
             {
-                if((*node)->parent->right == (*node))
-                {
-                    (*node)->parent->right = NULL;
-                }
-                else
-                {
-                    (*node)->parent->left = NULL;
-                }
+                parent->right = node->right;
+                node->right->parent = parent;
             }
-            free((*node));
-            return;
+            return node->right;
         }
     }
-    else if((*node)->left == NULL)
+    else if(node->right == NULL)
     {
-        if((*node)->item.val.symbol == '+')
+        if(node->item.val.symbol == '+')
         {
-            Node * parent = (*node)->parent;
-            Node * cur_node = (*node);
-            (*node) = (*node)->right;
-            (*node)->parent = parent;
-            // if(parent != NULL)
-            // {
-            //     printf("%d %c\n", parent->left->item.val.symbol, cur_node->item.val.symbol);
-            //     if(parent->left == cur_node)
-            //     {
-            //         parent->left == (*node);
-            //     }
-            //     else
-            //     {
-            //         parent->right = (*node);
-            //     }
-            // }
-            free(cur_node);
+            if(parent == NULL)
+            {
+                return node->left;
+                
+            }
+            else if(parent->left == node)
+            {
+                parent->left = node->left;
+                node->left->parent = parent;
+            }
+            else
+            {
+                parent->right = node->left;
+                node->left->parent = parent;
+            }
+            return node->left;
         }
     }
-    else if((*node)->right == NULL)
+    if(node->right != NULL && node->right->item.T == operator)
     {
-        if((*node)->item.val.symbol == '+')
-        {
-            Node * parent = (*node)->parent;
-            Node * cur_node = (*node);
-            (*node) = (*node)->left;
-            (*node)->parent = parent;
-            // if(parent != NULL)
-            // {
-            //     if(parent->left == cur_node)
-            //     {
-            //         parent->left == (*node);
-            //     }
-            //     else
-            //     {
-            //         parent->right = (*node);
-            //     }
-            // }
-            free(cur_node);
-        }
+        node->right = repairTree(node->right);
     }
-    if((*node)->right != NULL && ((*node)->right->item.T == operator))
-    {
-        repairTree(&((*node)->right));
-    }
+    return node;
 }
 
 void printTreeInString(Node *node)
 {
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->left->item.T == operator)
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
+    (node->left->item.val.symbol == '+' || node->left->item.val.symbol == '-'))
     {
         printf("( ");
     }
@@ -514,19 +537,38 @@ void printTreeInString(Node *node)
     {
         printTreeInString(node->left);
     }
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->left->item.T == operator)
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
+    (node->left->item.val.symbol == '+' || node->left->item.val.symbol == '-'))
     {
         printf(") ");
     }
     if(node->item.T == number)
     {
-        printf("%d ", node->item.val.num);
+        if(node->item.val.num < 0)
+        {
+            if(node->parent->item.T == operator && (node->parent->item.val.symbol == '*' || node->parent->item.val.symbol == '*'))
+            {
+                printf("(%d) ", node->item.val.num);
+            }
+            else
+            {
+                printf("- %d ", (-1)*(node->item.val.num));
+            }
+        }
+        else
+        {
+            printf("%d ", node->item.val.num);
+        }
     }
     else
     {
-        printf("%c ", node->item.val.symbol);
+        if(!((node->right != NULL) && (node->right->item.T == number) && (node->right->item.val.num < 0)))
+        {
+            printf("%c ", node->item.val.symbol);
+        }
     }
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->right->item.T == operator)
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
+    (node->right->item.val.symbol == '+' || node->right->item.val.symbol == '-'))
     {
         printf("( ");
     }
@@ -534,7 +576,8 @@ void printTreeInString(Node *node)
     {
         printTreeInString(node->right);
     }
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->right->item.T == operator)
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
+    (node->right->item.val.symbol == '+' || node->right->item.val.symbol == '-'))
     {
         printf(") ");
     }
@@ -542,14 +585,16 @@ void printTreeInString(Node *node)
 int main()
 {
     Stack *stack = stringToStack();
+    printStack(stack);
     Node *tree = stackToTree(stack);
-    // printTree(tree, 0);
-    // printf("^^^^^^^^^^^\n");
+    //printTree(tree, 0);
+    printf("^^^^^^^^^^^\n");
     doSumTree(tree);
     // printTree(tree, 0);
     // printf("^^^^^^^^^^^\n");
-    repairTree(&tree);
-    // printTree(tree, 0);
+    tree = repairTree(tree);
+    printTree(tree, 0);
+    printf("^^^^^^^\n");
     printTreeInString(tree);
     return 0;
 }
