@@ -65,10 +65,6 @@ Stack * Push(Stack * stack, Item item)
 
 Item Pop(Stack ** stack)
 {
-    if(*stack == NULL)
-    {
-        return NULL;
-    }
     Item result = (*stack)->item;
     *stack = (*stack)->prev;
     return result;
@@ -89,13 +85,29 @@ Stack * sumStacks(Stack *a, Stack *b)
     return a;
 }
 
+void printStack(Stack *stack)
+{
+    if(stack == NULL)
+    {
+        return;
+    }
+    if(stack->item.T == number)
+    {
+        printf("%d\n", stack->item.val.num);
+    }
+    else
+    {
+        printf("%c\n", stack->item.val.symbol);
+    }
+    printStack(stack->prev);
+}
+
 Stack * stringToStack()
 {
     Stack * result = NULL;
-    Item item;
     int buff = 0;
-    int lastNum = 0;
-    char c;
+    int lastNum = 0, isNegative = 0;
+    char c, c_prev;
     while(1)
     {
         if(lastNum == 0)
@@ -128,7 +140,7 @@ Stack * stringToStack()
             else
             {
                 Item op = Pop(&result);
-                result = sumStacks(result, inner_stack);
+                result = sumStacks(inner_stack, result);
                 result = Push(result, op);
             }
         }
@@ -138,6 +150,15 @@ Stack * stringToStack()
         }
         else if(isDigit(c))
         {
+            if(result != NULL && c_prev == '-')
+            {
+                Pop(&result);
+                if(result != NULL)
+                {
+                    result = Push(result, (Item){'+', operator});
+                }
+                isNegative = 1;
+            }
             lastNum = 1;
             buff = c - '0';
             while(isDigit(c))
@@ -148,14 +169,25 @@ Stack * stringToStack()
                     buff = buff * 10 + (c - '0');
                 }
             }
+            if(isNegative)
+            {
+                buff *= -1;
+                isNegative = 0;
+            }
             if(result == NULL)
             {
-                result = Push(result, (Item){buff, number});
+                Item item;
+                item.T = number;
+                item.val.num = buff;
+                result = Push(result, item);
             }
             else if(result->item.T == operator)
             {
+                Item item;
+                item.T = number;
+                item.val.num = buff;
                 Item op = Pop(&result);
-                result = Push(Push(result, (Item){buff, number}), op);
+                result = Push(Push(result, item), op);
             }
             else
             {
@@ -178,29 +210,38 @@ Stack * stringToStack()
                 printf("Неучтённое поведение 2");
             }
         }
+        c_prev = c;
     }
 }
 
-void printStack(Stack *stack)
+
+void printTree(Node *node, int depth)
 {
-    if(stack == NULL)
+    if(node->right != NULL)
     {
-        return;
+        printTree(node->right, depth+1);
     }
-    if(stack->item.T == number)
+    for(int i = 0; i < depth; i++)
     {
-        printf("%d\n", stack->item.val.num);
+        printf("\t");
+    }
+    if(node->item.T == number)
+    {
+        printf("%d\n", node->item.val.num);
     }
     else
     {
-        printf("%c\n", stack->item.val.symbol);
+        printf("%c\n", node->item.val.symbol);
     }
-    printStack(stack->prev);
+    if(node->left != NULL)
+    {
+        printTree(node->left, depth+1);
+    }
 }
 
 Node * stackToTree(Stack * stack)
 {
-    Node * result = (Node)malloc(sizeof(Node));
+    Node * result = (Node *)malloc(sizeof(Node));
     Item item = Pop(&stack);
     result->item = item;
     result->left = NULL;
@@ -210,20 +251,21 @@ Node * stackToTree(Stack * stack)
     int findEmpty = 0;
     while(1)
     {
+        if(stack == NULL && findEmpty == 0)
+        {
+            return result;
+        }
         if(findEmpty == 0)
         {
             item = Pop(&stack);
         }
-        if(item == NULL)
-        {
-            return result;
-        }
+        
         if(item.T == operator)
         {
             if(cur_node->right == NULL)
             {
                 findEmpty = 0;
-                cur_node->right = (Node)malloc(sizeof(Node));
+                cur_node->right = (Node *)malloc(sizeof(Node));
                 cur_node->right->parent = cur_node;
                 cur_node->right->right = NULL;
                 cur_node->right->left = NULL;
@@ -233,7 +275,7 @@ Node * stackToTree(Stack * stack)
             else if(cur_node->left == NULL)
             {
                 findEmpty = 0;
-                cur_node->left = (Node)malloc(sizeof(Node));
+                cur_node->left = (Node *)malloc(sizeof(Node));
                 cur_node->left->parent = cur_node;
                 cur_node->left->right = NULL;
                 cur_node->left->left = NULL;
@@ -250,7 +292,8 @@ Node * stackToTree(Stack * stack)
         {
             if(cur_node->right == NULL)
             {
-                cur_node->right = (Node)malloc(sizeof(Node));
+                findEmpty = 0;
+                cur_node->right = (Node *)malloc(sizeof(Node));
                 cur_node->right->parent = cur_node;
                 cur_node->right->right = NULL;
                 cur_node->right->left = NULL;
@@ -258,7 +301,8 @@ Node * stackToTree(Stack * stack)
             }
             else if(cur_node->left == NULL)
             {
-                cur_node->left = (Node)malloc(sizeof(Node));
+                findEmpty = 0;
+                cur_node->left = (Node *)malloc(sizeof(Node));
                 cur_node->left->parent = cur_node;
                 cur_node->left->right = NULL;
                 cur_node->left->left = NULL;
@@ -271,14 +315,208 @@ Node * stackToTree(Stack * stack)
             }
         }
     }
-
 }
 
-void printTree(Node *node)
+int findSumTree(Node *node)
 {
+    if(node == NULL || (node->item.T == operator && (node->item.val.symbol == '*' ||node->item.val.symbol == '/')))
+    {
+        return 0;
+    }
+    int result = 0;
+    if(node->item.T == number)
+    {
+        result += node->item.val.num;
+    }
+    return result + findSumTree(node->left) + findSumTree(node->right);
+}
+void doSumTree(Node * node);
+void deleteAllNum(Node *node);
+int insertNum(Node *node, int num);
+
+void deleteAllNum(Node *node)
+{
+    if(node->left->item.T == number)
+    {
+        free(node->left);
+        node->left = NULL;
+    }
+    if(node->right->item.T == number)
+    {
+        free(node->right);
+        node->right = NULL;
+    }
+    if(node->left != NULL && node->left->item.T == operator)
+    {
+        if(node->left->item.val.symbol == '+' || node->left->item.val.symbol == '-')
+        {
+            deleteAllNum(node->left);
+        }
+        else
+        {
+            doSumTree(node->left);
+        }
+    }
+    if(node->right != NULL && node->right->item.T == operator)
+    {
+        if(node->right->item.val.symbol == '+' || node->right->item.val.symbol == '-')
+        {
+            deleteAllNum(node->right);
+        }
+        else
+        {
+            doSumTree(node->right);
+        }
+    }
+}
+int insertNum(Node *node, int num)
+{
+    if(node == NULL || node->item.T != operator)
+    {
+        return 0;
+    }
+    if(node->right == NULL)
+    {
+        node->right = (Node*)malloc(sizeof(Node));
+        Item item;
+        item.T = number;
+        item.val.num = num;
+        node->right->item = item;
+        node->right->left = NULL;
+        node->right->right = NULL;
+        node->right->parent = node;
+        return 1;
+    }
+    else if(node->left == NULL)
+    {
+        node->left = (Node*)malloc(sizeof(Node));
+        Item item;
+        item.T = number;
+        item.val.num = num;
+        node->left->item = item;
+        node->left->left = NULL;
+        node->left->right = NULL;
+        node->left->parent = node;
+        return 1;
+    }
+    else
+    {
+        if(!insertNum(node->right, num))
+        {
+            insertNum(node->left, num);
+        }
+    }
+}
+
+void doSumTree(Node * node)
+{
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/'))
+    {
+        doSumTree(node->left);
+        doSumTree(node->right);
+    }
+    else if(node->item.T == operator)//+ or -
+    {
+        int sumTree = findSumTree(node);
+        deleteAllNum(node);
+        insertNum(node, sumTree);
+    }
+}
+void repairTree(Node ** node)
+{
+    if((*node)->left != NULL && ((*node)->left->item.T == operator))
+    {
+        repairTree(&((*node)->left));
+    }
+    if((*node)->right == NULL && (*node)->left == NULL)
+    {
+        //printf("1#%c#1\n", (*node)->item.val.symbol);
+        if((*node)->item.T == operator)
+        {
+            if((*node)->parent == NULL)
+            {
+                (*node) = NULL;
+                return;
+            }
+            else
+            {
+                if((*node)->parent->right == (*node))
+                {
+                    (*node)->parent->right = NULL;
+                }
+                else
+                {
+                    (*node)->parent->left = NULL;
+                }
+            }
+            free((*node));
+            return;
+        }
+    }
+    else if((*node)->left == NULL)
+    {
+        if((*node)->item.val.symbol == '+')
+        {
+            Node * parent = (*node)->parent;
+            Node * cur_node = (*node);
+            (*node) = (*node)->right;
+            (*node)->parent = parent;
+            // if(parent != NULL)
+            // {
+            //     printf("%d %c\n", parent->left->item.val.symbol, cur_node->item.val.symbol);
+            //     if(parent->left == cur_node)
+            //     {
+            //         parent->left == (*node);
+            //     }
+            //     else
+            //     {
+            //         parent->right = (*node);
+            //     }
+            // }
+            free(cur_node);
+        }
+    }
+    else if((*node)->right == NULL)
+    {
+        if((*node)->item.val.symbol == '+')
+        {
+            Node * parent = (*node)->parent;
+            Node * cur_node = (*node);
+            (*node) = (*node)->left;
+            (*node)->parent = parent;
+            // if(parent != NULL)
+            // {
+            //     if(parent->left == cur_node)
+            //     {
+            //         parent->left == (*node);
+            //     }
+            //     else
+            //     {
+            //         parent->right = (*node);
+            //     }
+            // }
+            free(cur_node);
+        }
+    }
+    if((*node)->right != NULL && ((*node)->right->item.T == operator))
+    {
+        repairTree(&((*node)->right));
+    }
+}
+
+void printTreeInString(Node *node)
+{
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->left->item.T == operator)
+    {
+        printf("( ");
+    }
     if(node->left != NULL)
     {
-        printTree(node->left);
+        printTreeInString(node->left);
+    }
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->left->item.T == operator)
+    {
+        printf(") ");
     }
     if(node->item.T == number)
     {
@@ -288,15 +526,30 @@ void printTree(Node *node)
     {
         printf("%c ", node->item.val.symbol);
     }
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->right->item.T == operator)
+    {
+        printf("( ");
+    }
     if(node->right != NULL)
     {
-        printTree(node->right);
+        printTreeInString(node->right);
+    }
+    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && node->right->item.T == operator)
+    {
+        printf(") ");
     }
 }
 int main()
 {
     Stack *stack = stringToStack();
     Node *tree = stackToTree(stack);
-    printTree(tree);
+    // printTree(tree, 0);
+    // printf("^^^^^^^^^^^\n");
+    doSumTree(tree);
+    // printTree(tree, 0);
+    // printf("^^^^^^^^^^^\n");
+    repairTree(&tree);
+    // printTree(tree, 0);
+    printTreeInString(tree);
     return 0;
 }
