@@ -1,600 +1,458 @@
 #include <stdio.h>
-#include <malloc.h>
+#include <stdbool.h>
 #include <math.h>
-#include <stdlib.h>
-
-typedef union val
-{
-    char symbol;
-    int num;
-} value;
-
-typedef enum {operator, number, letter} type;
-
-typedef struct el
-{
-    value val;
-    type T;
-} Item;
-
-typedef struct tree
-{
-    Item item;
-    struct tree* left;
-    struct tree* right;
-    struct tree* parent;
-} Node;
-
-typedef struct stk
-{
-    Item item;
-    struct stk * prev;
-} Stack;
-
-int isOperator(char c)
-{
-    return c == '+' || c == '-' || c == '*' || c == '^' || c == '/' || c == '(' || c == ')';
-}
-
-int isDigit(char c)
-{
+#include "libs/item.h"
+#include "libs/stack.c"
+#include "libs/tree.c"
+bool IsDigit(char c) {
     return c >= '0' && c <= '9';
 }
 
-int isLetter(char c)
-{
-    return (c >= 'a' && c <= 'z') || ( c >= 'A' && c <= 'Z');
+bool IsOperator(char c) {
+    return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == ')';
 }
 
-int sizeOf(Stack * stack)
-{
-    if(stack == NULL)
-    {
-        return 0;
+bool IsLetter(char c) {
+    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+}
+
+double DoOperation(double a, double b, char operator) {
+    double c;
+    if (operator == '+') {
+        c = a + b;
+    } else if (operator == '-') {
+        c = a - b;
+    } else if (operator == '*') {
+        c = a * b;
+    } else if (operator == '/') {
+        c = a / b;
+    } else if (operator == '^') {
+        c = pow(a, b);
     }
-    return 1 + sizeOf(stack->prev);
+    return c;
 }
 
-Stack * Push(Stack * stack, Item item)
-{
-    Stack * result = (Stack *)malloc(sizeof(Stack));
-    result->prev = stack;
-    result->item = item;
+int CheckPriorety(char c) {
+    int result;
+    if (c == '+' || c == '-') {
+        result = 1;
+    } else if (c == '*' || c == '/') {
+        result = 2;
+    } else if (c == '^') {
+        result = 3;
+    } else if (c == ')') {
+        result = -1;
+    } else if (c == '(') {
+        result = 0;
+    }
     return result;
 }
 
-Item Pop(Stack ** stack)
-{
-    Item result = (*stack)->item;
-    *stack = (*stack)->prev;
-    return result;
-}
-
-Stack * sumStacks(Stack *a, Stack *b)
-{
-    if(a == NULL)
-    {
-        return b;
-    }
-    Stack *cur_stack = a;
-    while(cur_stack->prev != NULL)
-    {
-        cur_stack = cur_stack->prev;
-    }
-    cur_stack->prev = b;
-    return a;
-}
-
-void printStack(Stack *stack)
-{
-    if(stack == NULL)
-    {
-        return;
-    }
-    if(stack->item.T == number)
-    {
-        printf("%d\n", stack->item.val.num);
-    }
-    else
-    {
-        printf("%c\n", stack->item.val.symbol);
-    }
-    printStack(stack->prev);
-}
-
-Stack * stringToStack()
-{
-    Stack * result = NULL;
-    int buff = 0;
-    int lastNum = 0, isNegative = 0;
-    char c, c_prev;
-    while(1)
-    {
-        if(lastNum == 0)
-        {
-            c = getchar();
-        }
-        else
-        {
-            lastNum = 0;
-        }
-        if(c == EOF || c == '\n')
-        {
-            return result;
-        }
-        else if(c == ' ')
-        {
+void ReadToStack(Stack **stk) {
+    Stack *bufStk = NULL;
+    bool isNumTyped = false;
+    bool isNotStarted = true;
+    bool isFractional = false;
+    bool nextIsOp = false;
+    double buff = 0.0;
+    int sign = 1;
+    double p = 1.0;
+    while (1) {
+        char c = getchar();
+        if (c == ' ') {
             continue;
         }
-        else if(isOperator(c) && c == ')')
-        {
-            return result;
-        }
-        else if(isOperator(c) && c == '(')
-        {
-            Stack * inner_stack = stringToStack();
-            if(result == NULL)
-            {
-                result = inner_stack;
-            }
-            else
-            {
-                Item op = Pop(&result);
-                if(result->item.val.symbol == '+' || result->item.val.symbol == '-')
-                {
-                    Item op2 = Pop(&result);
-                    result = sumStacks(inner_stack, result);
-                    result = Push(Push(result, op), op2);
+        if (IsDigit(c) || c == '.' || (c == '+' || c == '-') && isNotStarted && !nextIsOp) {
+            isNotStarted = false;
+            if (IsDigit(c)) {
+                isNumTyped = true;
+                buff = buff * 10 + (c - '0');
+                if (isFractional) {
+                    p *= 0.1;
                 }
-                else
-                {
-                    result = sumStacks(inner_stack, result);
-                    result = Push(result, op);
-                }
+            } else if (c == '.') {
+                isFractional = true;
+            } else if (c == '-') {
+                sign = -1;
             }
-        }
-        else if(isOperator(c))
-        {
-            result = Push(result, (Item){c, operator});
-        }
-        else if(isDigit(c))
-        {
-            if(result != NULL && c_prev == '-')
-            {
-                Pop(&result);
-                if(result != NULL)
-                {
-                    result = Push(result, (Item){'+', operator});
-                }
-                isNegative = 1;
+        } else if (IsOperator(c) || c == EOF || c == '\n') {
+            isNumTyped = false;
+            Value v;
+            if (!nextIsOp) {
+                buff = buff * p * sign;
+                v.number = buff;
+                StackPush(stk, (Item){v, NUMBER});
             }
-            lastNum = 1;
-            buff = c - '0';
-            while(isDigit(c))
-            {
-                c = getchar();
-                if(isDigit(c))
-                {
-                    buff = buff * 10 + (c - '0');
+            isNotStarted = true;
+            sign = 1;
+            buff = 0.0;
+            p = 1.0;
+            nextIsOp = false;
+            isFractional = false;
+            int priorety = CheckPriorety(c);
+            while (!StackIsEmpty(&bufStk)) {
+                if (CheckPriorety(StackTop(&bufStk).value.symbol) > priorety || c == EOF || c == '\n') {
+                    if (StackTop(&bufStk).value.symbol != '(') {
+                        StackPush(stk, StackTop(&bufStk));
+                    }
+                    StackPop(&bufStk);
+                } else {
+                    break;
                 }
             }
-            if(isNegative)
-            {
-                buff *= -1;
-                isNegative = 0;
+            if (c == ')' || c == EOF || c == '\n') {
+                nextIsOp = true;
+            } else {
+                v.symbol = c;
+                StackPush(&bufStk, (Item){v, OPERATOR});
             }
-            if(result == NULL)
-            {
-                Item item;
-                item.T = number;
-                item.val.num = buff;
-                result = Push(result, item);
-            }
-            else if(result->item.T == operator)
-            {
-                Item item;
-                item.T = number;
-                item.val.num = buff;
-                Item op = Pop(&result);
-                if((op.val.symbol == '*' || op.val.symbol == '/') && result->item.T == operator)
-                {  
-                    Item op2 = Pop(&result);
-                    result = Push(Push(Push(result, item), op), op2);
-                }
-                else
-                {
-                    result = Push(Push(result, item), op);
-                }
-            }
-            else
-            {
-                printf("Неучтённое поведение 1");
-            }
-        }
-        else if (isLetter(c))
-        {
-            if(result == NULL)
-            {
-                result = Push(result, (Item){c, letter});
-            }
-            else if(result->item.T == operator)
-            {
-                Item op = Pop(&result);
-                if((op.val.symbol == '*' || op.val.symbol == '/') && result->item.T == operator)
-                {
-                    Item op2 = Pop(&result);
-                    result = Push(Push(Push(result, (Item){c, letter}), op), op2);
-                }
-                else
-                {
-                    result = Push(Push(result, (Item){c, letter}), op);
-                }
-                
-            }
-            else
-            {
-                printf("Неучтённое поведение 2");
-            }
-        }
-        c_prev = c;
-    }
-}
 
-
-void printTree(Node *node, int depth)
-{
-    if(node->right != NULL)
-    {
-        printTree(node->right, depth+1);
-    }
-    for(int i = 0; i < depth; i++)
-    {
-        printf("\t");
-    }
-    if(node->item.T == number)
-    {
-        printf("%d\n", node->item.val.num);
-    }
-    else
-    {
-        printf("%c\n", node->item.val.symbol);
-    }
-    if(node->left != NULL)
-    {
-        printTree(node->left, depth+1);
-    }
-}
-
-Node * stackToTree(Stack * stack)
-{
-    Node * result = (Node *)malloc(sizeof(Node));
-    Item item = Pop(&stack);
-    result->item = item;
-    result->left = NULL;
-    result->right = NULL;
-    result->parent = NULL;
-    Node * cur_node = result;
-    int findEmpty = 0;
-    while(1)
-    {
-        if(stack == NULL && findEmpty == 0)
-        {
-            return result;
+        } else if (c == '(') {
+            Value v;
+            v.symbol = c;
+            StackPush(&bufStk, (Item){v, OPERATOR});
+        } else if (IsLetter(c)) {
+            nextIsOp = true;
+            Value v;
+            v.symbol = c;
+            StackPush(stk, (Item){v, VARIABLE});
+            if (!isNotStarted) {
+                if (!isNumTyped) {
+                    buff = 1.0;
+                }
+                buff *= p * sign;
+                v.number = buff;
+                StackPush(stk, (Item){v, NUMBER});
+                v.symbol = '*';
+                StackPush(stk, (Item){v, OPERATOR});
+            }
+            isNumTyped = true;
         }
-        if(findEmpty == 0)
-        {
-            item = Pop(&stack);
+
+        if (c == '\n' || c == EOF) {
+            break;
         }
         
-        if(item.T == operator)
-        {
-            if(cur_node->right == NULL)
-            {
-                findEmpty = 0;
-                cur_node->right = (Node *)malloc(sizeof(Node));
-                cur_node->right->parent = cur_node;
-                cur_node->right->right = NULL;
-                cur_node->right->left = NULL;
-                cur_node->right->item = item;
-                cur_node = cur_node->right;
-            }
-            else if(cur_node->left == NULL)
-            {
-                findEmpty = 0;
-                cur_node->left = (Node *)malloc(sizeof(Node));
-                cur_node->left->parent = cur_node;
-                cur_node->left->right = NULL;
-                cur_node->left->left = NULL;
-                cur_node->left->item = item;
-                cur_node = cur_node->left;
-            }
-            else
-            {
-                findEmpty = 1;
-                cur_node = cur_node->parent;
-            }
-        }
-        else
-        {
-            if(cur_node->right == NULL)
-            {
-                findEmpty = 0;
-                cur_node->right = (Node *)malloc(sizeof(Node));
-                cur_node->right->parent = cur_node;
-                cur_node->right->right = NULL;
-                cur_node->right->left = NULL;
-                cur_node->right->item = item;
-            }
-            else if(cur_node->left == NULL)
-            {
-                findEmpty = 0;
-                cur_node->left = (Node *)malloc(sizeof(Node));
-                cur_node->left->parent = cur_node;
-                cur_node->left->right = NULL;
-                cur_node->left->left = NULL;
-                cur_node->left->item = item;
-            }
-            else
-            {
-                findEmpty = 1;
-                cur_node = cur_node->parent;
-            }
-        }
     }
 }
 
-int findSumTree(Node *node)
+void BuildTree(Node **root, Stack **expr, Node * parent) {
+    if (StackIsEmpty(expr)) {
+        return;
+    }
+
+    (*root) = CreateNode(StackTop(expr));
+    (*root)->p = parent;
+    
+    StackPop(expr);
+    if ((*root)->value.type == OPERATOR) {
+        BuildTree(&(*root)->r, expr, (*root));
+        BuildTree(&(*root)->l, expr, (*root));
+    }
+
+}
+double findSumTree(Node *node)
 {
-    if(node == NULL || (node->item.T == operator && (node->item.val.symbol == '*' ||node->item.val.symbol == '/')))
+    if(node == NULL || (node->value.type == OPERATOR && CheckPriorety(node->value.value.symbol) >=2))
     {
         return 0;
     }
-    int result = 0;
-    if(node->item.T == number)
+    double result = 0;
+    if(node->value.type == NUMBER)
     {
-        result += node->item.val.num;
+        if(node->p->value.value.symbol == '-' && node->p->r == node)
+        {
+            result -= node->value.value.number;
+        }
+        else
+        {
+            result += node->value.value.number;
+        }
     }
-    return result + findSumTree(node->left) + findSumTree(node->right);
+    return result + findSumTree(node->l) + findSumTree(node->r);
 }
 void doSumTree(Node * node);
 void deleteAllNum(Node *node);
-int insertNum(Node *node, int num);
+int insertNum(Node *node, double num);
 
 void deleteAllNum(Node *node)
 {
-    if(node->left->item.T == number)
+    if(node->l->value.type == NUMBER)
     {
-        free(node->left);
-        node->left = NULL;
+        free(node->l);
+        node->l = NULL;
     }
-    if(node->right->item.T == number)
+    if(node->r->value.type == NUMBER)
     {
-        free(node->right);
-        node->right = NULL;
+        free(node->r);
+        node->r = NULL;
     }
-    if(node->left != NULL && node->left->item.T == operator)
+    if(node->l != NULL && node->l->value.type == OPERATOR)
     {
-        if(node->left->item.val.symbol == '+' || node->left->item.val.symbol == '-')
+        if(CheckPriorety(node->l->value.value.symbol) == 1)
         {
-            deleteAllNum(node->left);
+            deleteAllNum(node->l);
         }
         else
         {
-            doSumTree(node->left);
+            doSumTree(node->l);
         }
     }
-    if(node->right != NULL && node->right->item.T == operator)
+    if(node->r != NULL && node->r->value.type == OPERATOR)
     {
-        if(node->right->item.val.symbol == '+' || node->right->item.val.symbol == '-')
+        if(CheckPriorety(node->r->value.value.symbol) == 1)
         {
-            deleteAllNum(node->right);
+            deleteAllNum(node->r);
         }
         else
         {
-            doSumTree(node->right);
+            doSumTree(node->r);
         }
     }
 }
-int insertNum(Node *node, int num)
+int insertNum(Node *node, double num)
 {
-    if(node == NULL || node->item.T != operator)
+    if(node == NULL || node->value.type != OPERATOR)
     {
         return 0;
     }
-    if(node->right == NULL)
+    if(node->r == NULL)
     {
-        node->right = (Node*)malloc(sizeof(Node));
+        node->r = (Node*)malloc(sizeof(Node));
         Item item;
-        item.T = number;
-        item.val.num = num;
-        node->right->item = item;
-        node->right->left = NULL;
-        node->right->right = NULL;
-        node->right->parent = node;
+        item.type = NUMBER;
+        item.value.number = num;
+        node->r->value = item;
+        node->r->l = NULL;
+        node->r->r = NULL;
+        node->r->p = node;
         return 1;
     }
-    else if(node->left == NULL)
+    else if(node->l == NULL)
     {
-        node->left = (Node*)malloc(sizeof(Node));
+        node->l = (Node*)malloc(sizeof(Node));
         Item item;
-        item.T = number;
-        item.val.num = num;
-        node->left->item = item;
-        node->left->left = NULL;
-        node->left->right = NULL;
-        node->left->parent = node;
+        item.type = NUMBER;
+        item.value.number = num;
+        node->l->value = item;
+        node->l->l = NULL;
+        node->l->r = NULL;
+        node->l->p = node;
         return 1;
     }
     else
     {
-        if(!insertNum(node->right, num))
+        if(!insertNum(node->r, num))
         {
-            insertNum(node->left, num);
+            insertNum(node->l, num);
         }
     }
 }
 
 void doSumTree(Node * node)
 {
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/'))
+    if(node->value.type == OPERATOR && CheckPriorety(node->value.value.symbol) >= 2)
     {
-        doSumTree(node->left);
-        doSumTree(node->right);
+        doSumTree(node->l);
+        doSumTree(node->r);
     }
-    else if(node->item.T == operator)//+ or -
+    else if(node->value.type == OPERATOR)//+ or -
     {
-        int sumTree = findSumTree(node);
+        double sumTree = findSumTree(node);
         deleteAllNum(node);
         insertNum(node, sumTree);
     }
 }
 Node * repairTree(Node * node)
 {
-    if(node->left != NULL && node->left->item.T == operator)
+    if(node->l != NULL && node->l->value.type == OPERATOR)
     {
-        node->left = repairTree(node->left);
+        node->l = repairTree(node->l);
     }
-    if(node->item.T != operator)
+    if(node->value.type != OPERATOR)
     {
         return node;
     }
-    Node * parent = node->parent;
-    if(node->left == NULL && node->right == NULL)
+    Node * parent = node->p;
+    if(node->l == NULL && node->r == NULL)
     {
         if(parent == NULL)
         {
             return NULL;
         }
-        if(parent->left == node)
+        if(parent->l == node)
         {
-            parent->left = NULL;
+            parent->l = NULL;
             return NULL;
         }
         else
         {
-            parent->right = NULL;
+            parent->r = NULL;
             return NULL;
         }
     }
-    else if(node->left == NULL)
+    else if(node->l == NULL)
     {
-        if(node->item.val.symbol == '+')
+        if(CheckPriorety(node->value.value.symbol)==1)
         {
             if(parent == NULL)
             {
-                return node->right;
+                return node->r;
             }
-            else if(parent->left == node)
+            else if(parent->l == node)
             {
-                parent->left = node->right;
-                node->right->parent = parent;
+                parent->l = node->r;
+                node->r->p = parent;
             }
             else
             {
-                parent->right = node->right;
-                node->right->parent = parent;
+                parent->r = node->r;
+                node->r->p = parent;
             }
-            return node->right;
+            return node->r;
         }
     }
-    else if(node->right == NULL)
+    else if(node->r == NULL)
     {
-        if(node->item.val.symbol == '+')
+        if(CheckPriorety(node->value.value.symbol)==1)
         {
             if(parent == NULL)
             {
-                return node->left;
+                return node->l;
                 
             }
-            else if(parent->left == node)
+            else if(parent->l == node)
             {
-                parent->left = node->left;
-                node->left->parent = parent;
+                parent->l = node->l;
+                node->l->p = parent;
             }
             else
             {
-                parent->right = node->left;
-                node->left->parent = parent;
+                parent->r = node->l;
+                node->l->p = parent;
             }
-            return node->left;
+            return node->l;
         }
     }
-    if(node->right != NULL && node->right->item.T == operator)
+    if(node->r != NULL && node->r->value.type == OPERATOR)
     {
-        node->right = repairTree(node->right);
+        node->r = repairTree(node->r);
     }
     return node;
 }
+void PrintTree(Node *root, int depth) {
+    if (root != NULL) {
+        if (root->value.type == OPERATOR) {
+            // if (root->l->value.type == OPERATOR) {
+            //     if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->l->value.value.symbol)) {
+            //         printf("(");
+            //     }
+            // }
 
-void printTreeInString(Node *node)
-{
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
-    (node->left->item.val.symbol == '+' || node->left->item.val.symbol == '-'))
-    {
-        printf("( ");
+            PrintTree(root->l, depth+1);
+
+            // if (root->l->value.type == OPERATOR) {
+            //     if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->l->value.value.symbol)) {
+            //         printf(")");
+            //     }
+            // }
+            for(int i = 0; i < depth; i++)
+            {
+                printf("\t");
+            }
+            printf(" %c \n", root->value.value.symbol);
+
+            // if (root->r->value.type == OPERATOR) {
+            //     if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->r->value.value.symbol)) {
+            //         printf("(");
+            //     }
+            // }
+
+            PrintTree(root->r, depth+1);
+
+            // if (root->r->value.type == OPERATOR) {
+            //     if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->r->value.value.symbol)) {
+            //         printf(")");
+            //     }
+            // }
+        } else if (root->value.type == VARIABLE) {
+            for(int i = 0; i < depth; i++)
+            {
+                printf("\t");
+            }
+            printf("%c\n", root->value.value.symbol);
+        } else {
+            for(int i = 0; i < depth; i++)
+            {
+                printf("\t");
+            }
+            printf("%f\n", root->value.value.number);
+        }
+    } else {
+        printf("\n");
     }
-    if(node->left != NULL)
-    {
-        printTreeInString(node->left);
-    }
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
-    (node->left->item.val.symbol == '+' || node->left->item.val.symbol == '-'))
-    {
-        printf(") ");
-    }
-    if(node->item.T == number)
-    {
-        if(node->item.val.num < 0)
+}
+void PrintTreeInString(Node *root) {
+    if (root != NULL) {
+        if (root->l != NULL && root->l->value.type == OPERATOR) {
+            if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->l->value.value.symbol)) {
+                printf("(");
+            }
+        }
+
+        PrintTreeInString(root->l);
+
+        if (root->l != NULL && root->l->value.type == OPERATOR) {
+            if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->l->value.value.symbol)) {
+                printf(")");
+            }
+        }
+        if(root->value.type == NUMBER)
         {
-            if(node->parent->item.T == operator && (node->parent->item.val.symbol == '*' || node->parent->item.val.symbol == '*'))
+            if(root->value.value.number == 0)
             {
-                printf("(%d) ", node->item.val.num);
+                return;
             }
-            else
-            {
-                printf("- %d ", (-1)*(node->item.val.num));
-            }
+            printf(" %f ", root->value.value.number);
         }
         else
         {
-            printf("%d ", node->item.val.num);
+            if(root->value.type != OPERATOR || root->l != NULL && root->r != NULL)
+            {
+                printf(" %c ", root->value.value.symbol);
+            }
         }
-    }
-    else
-    {
-        if(!((node->right != NULL) && (node->right->item.T == number) && (node->right->item.val.num < 0)))
-        {
-            printf("%c ", node->item.val.symbol);
+        if (root->r != NULL && root->r->value.type == OPERATOR) {
+            if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->r->value.value.symbol)) {
+                printf("(");
+            }
         }
-    }
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
-    (node->right->item.val.symbol == '+' || node->right->item.val.symbol == '-'))
-    {
-        printf("( ");
-    }
-    if(node->right != NULL)
-    {
-        printTreeInString(node->right);
-    }
-    if(node->item.T == operator && (node->item.val.symbol == '*' || node->item.val.symbol == '/') && \
-    (node->right->item.val.symbol == '+' || node->right->item.val.symbol == '-'))
-    {
-        printf(") ");
+
+        PrintTreeInString(root->r);
+
+        if (root->r != NULL && root->r->value.type == OPERATOR) {
+            if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->r->value.value.symbol)) {
+                printf(")");
+            }
+        }
     }
 }
-int main()
-{
-    Stack *stack = stringToStack();
-    printStack(stack);
-    Node *tree = stackToTree(stack);
-    //printTree(tree, 0);
+
+int main() {
+    Stack *stk = NULL;
+    Value v;
+    v.number = 5;
+    Node *root = NULL;
+    ReadToStack(&stk);
+    Stack *iter = stk;
+    BuildTree(&root, &stk, NULL);
+    PrintTree(root, 0);
     printf("^^^^^^^^^^^\n");
-    doSumTree(tree);
-    // printTree(tree, 0);
-    // printf("^^^^^^^^^^^\n");
-    tree = repairTree(tree);
-    printTree(tree, 0);
+    doSumTree(root);
+    PrintTree(root, 0);
+    printf("^^^^^^^^^^^\n");
+    root = repairTree(root);
+    PrintTree(root, 0);
     printf("^^^^^^^\n");
-    printTreeInString(tree);
-    return 0;
+    PrintTreeInString(root);
 }
