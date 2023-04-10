@@ -7,7 +7,7 @@
 bool IsDigit(char c) {
     return c >= '0' && c <= '9';
 }
-
+void printStack(Stack * stack);
 bool IsOperator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/' || c == '^' || c == ')';
 }
@@ -94,6 +94,10 @@ void ReadToStack(Stack **stk) {
                 if (CheckPriorety(StackTop(&bufStk).value.symbol) > priorety || c == EOF || c == '\n') {
                     if (StackTop(&bufStk).value.symbol != '(') {
                         StackPush(stk, StackTop(&bufStk));
+                    }
+                    else {
+                        StackPop(&bufStk);
+                        break;
                     }
                     StackPop(&bufStk);
                 } else {
@@ -396,7 +400,7 @@ void PrintTreeInString(Node *root) {
     if (root != NULL) {
         if (root->l != NULL && root->l->value.type == OPERATOR) {
             if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->l->value.value.symbol)) {
-                printf("(");
+                printf("( ");
             }
         }
 
@@ -404,7 +408,7 @@ void PrintTreeInString(Node *root) {
 
         if (root->l != NULL && root->l->value.type == OPERATOR) {
             if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->l->value.value.symbol)) {
-                printf(")");
+                printf(") ");
             }
         }
         if(root->value.type == NUMBER)
@@ -413,18 +417,18 @@ void PrintTreeInString(Node *root) {
             {
                 return;
             }
-            printf(" %f ", root->value.value.number);
+            printf("%f ", root->value.value.number);
         }
         else
         {
             if(root->value.type != OPERATOR || root->l != NULL && root->r != NULL)
             {
-                printf(" %c ", root->value.value.symbol);
+                printf("%c ", root->value.value.symbol);
             }
         }
         if (root->r != NULL && root->r->value.type == OPERATOR) {
             if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->r->value.value.symbol)) {
-                printf("(");
+                printf("( ");
             }
         }
 
@@ -432,27 +436,47 @@ void PrintTreeInString(Node *root) {
 
         if (root->r != NULL && root->r->value.type == OPERATOR) {
             if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->r->value.value.symbol)) {
-                printf(")");
+                printf(") ");
             }
         }
     }
 }
-
+void printStack(Stack * stack)
+{
+    while(stack != NULL)
+    {
+        if(stack->value.type != NUMBER)
+        {
+            printf("%c\n", stack->value.value.symbol);
+        }
+        else
+        {
+            printf("%f\n", stack->value.value.number);
+        }
+        stack = stack->next;
+    }
+}
 int main() {
-    Stack *stk = NULL;
-    Value v;
-    v.number = 5;
-    Node *root = NULL;
-    ReadToStack(&stk);
-    Stack *iter = stk;
-    BuildTree(&root, &stk, NULL);
-    PrintTree(root, 0);
-    printf("^^^^^^^^^^^\n");
-    doSumTree(root);
-    PrintTree(root, 0);
-    printf("^^^^^^^^^^^\n");
-    root = repairTree(root);
-    PrintTree(root, 0);
-    printf("^^^^^^^\n");
-    PrintTreeInString(root);
+    while(1)
+    {
+        printf(">>> ");    
+        Stack *stk = NULL;
+        Value v;
+        v.number = 5;
+        Node *root = NULL;
+        ReadToStack(&stk);
+        // printStack(stk);
+        BuildTree(&root, &stk, NULL);
+        // PrintTree(root, 0);
+        // printf("^^^^^^^^^^^\n");
+        doSumTree(root);
+        // PrintTree(root, 0);
+        // printf("^^^^^^^^^^^\n");
+        root = repairTree(root);
+        // PrintTree(root, 0);
+        // printf("^^^^^^^\n");
+        printf("<<< ");
+        PrintTreeInString(root);
+        printf("\n");
+    }
 }
