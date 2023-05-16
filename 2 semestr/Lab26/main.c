@@ -1,4 +1,6 @@
-#include "lib/26.c"
+#include "lib/26.h"
+#include <stdio.h> 
+#include <stdlib.h>
 
 int main()
 {
@@ -11,12 +13,12 @@ int main()
     }
     udt_print(dek);
     printf("^^^^^^^^^^^^^^^^^^^^\n");
-    printf("udt is empty %d\n", udt_is_empty(dek), udt_size(dek));
+    printf("udt is empty %d\n", udt_is_empty(dek));
     data_type item = dek->top->back->back->item;
     printf("deleting item with key = %d...\n", item.key);
     udt_erase(&dek, item.key);
     udt_print(dek);
-    printf("dek size %d\n", udt_size(dek));
+    printf("dek size %ld\n", udt_size(dek));
     printf("^^^^^^^^^^^^^^^^^^^^\n");
     printf("do hoar's qsort...\n");
     dek = hoar_qsort(dek);

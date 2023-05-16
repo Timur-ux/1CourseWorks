@@ -1,6 +1,7 @@
 #ifndef __UDT_H__
 #define __UDT_H__
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef struct 
 {

@@ -269,9 +269,13 @@ void doSumTree(Node * node)
 }
 Node * repairTree(Node * node)
 {
-    if(node->l != NULL && node->l->value.type == OPERATOR)
+    if(node->r != NULL && node->r->value.type == OPERATOR)
     {
-        node->l = repairTree(node->l);
+        node->r = repairTree(node->r);
+        if(node->r != NULL && node->r->value.type == NUMBER && node->value.type == OPERATOR && (CheckPriorety(node->value.value.symbol)==1))
+        {
+            node->value.value.symbol = '+';
+        }
     }
     if(node->value.type != OPERATOR)
     {
@@ -306,12 +310,12 @@ Node * repairTree(Node * node)
             else if(parent->l == node)
             {
                 parent->l = node->r;
-                node->r->p = parent;
+                parent->l->p = parent;
             }
             else
             {
                 parent->r = node->r;
-                node->r->p = parent;
+                parent->r->p = parent;
             }
             return node->r;
         }
@@ -323,24 +327,27 @@ Node * repairTree(Node * node)
             if(parent == NULL)
             {
                 return node->l;
-                
             }
             else if(parent->l == node)
             {
                 parent->l = node->l;
-                node->l->p = parent;
+                parent->l->p = parent;
             }
             else
             {
                 parent->r = node->l;
-                node->l->p = parent;
+                parent->r->p = parent;
             }
             return node->l;
         }
     }
-    if(node->r != NULL && node->r->value.type == OPERATOR)
+    if(node->l != NULL && node->l->value.type == OPERATOR)
     {
-        node->r = repairTree(node->r);
+        node->l = repairTree(node->l);
+        if(node->l != NULL && node->l->value.type == NUMBER && node->value.type == OPERATOR && (CheckPriorety(node->value.value.symbol)==1))
+        {
+            node->value.value.symbol = '+';
+        }
     }
     return node;
 }
@@ -353,7 +360,7 @@ void PrintTree(Node *root, int depth) {
             //     }
             // }
 
-            PrintTree(root->l, depth+1);
+            PrintTree(root->r, depth+1);
 
             // if (root->l->value.type == OPERATOR) {
             //     if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->l->value.value.symbol)) {
@@ -372,7 +379,7 @@ void PrintTree(Node *root, int depth) {
             //     }
             // }
 
-            PrintTree(root->r, depth+1);
+            PrintTree(root->l, depth+1);
 
             // if (root->r->value.type == OPERATOR) {
             //     if (CheckPriorety(root->value.value.symbol) > CheckPriorety(root->r->value.value.symbol)) {
@@ -413,17 +420,29 @@ void PrintTreeInString(Node *root) {
         }
         if(root->value.type == NUMBER)
         {
-            if(root->value.value.number == 0)
-            {
-                return;
-            }
+            // if(root->value.value.number == 0)
+            // {
+            //     return;
+            // }
             printf("%f ", root->value.value.number);
+        }
+        else if(root->value.type == VARIABLE)
+        {
+            printf("%c ", root->value.value.symbol);
         }
         else
         {
-            if(root->value.type != OPERATOR || root->l != NULL && root->r != NULL)
+            if(root->l != NULL && root->r != NULL)
             {
-                printf("%c ", root->value.value.symbol);
+                if(root->value.value.symbol == '-' && root->r->l != NULL && root->r->l->value.type == NUMBER && \
+                CheckPriorety(root->r->value.value.symbol)==1)
+                {
+                    printf("+ ");
+                }
+                else
+                {
+                    printf("%c ", root->value.value.symbol);
+                }
             }
         }
         if (root->r != NULL && root->r->value.type == OPERATOR) {
