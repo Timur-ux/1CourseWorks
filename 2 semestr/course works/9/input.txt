@@ -1,7 +1,25 @@
-6 4
-0 0 1 0
-2 0 0 3
-0 0 0 0
-1 0 0 7
-0 0 2 0
-3 7 5 1
+Item8 1
+Item406 2
+Item669 3
+Item22 4
+Item255 5
+Item516 6
+Item764 7
+Item177 8
+Item291 9
+Item800 10
+Item378 11
+Item423 12
+Item571 13
+Item643 14
+Item279 15
+Item738 16
+Item593 17
+Item73 18
+Item389 19
+Item514 20
+Item550 21
+Item356 22
+Item423 23
+Item125 24
+Item225 25
